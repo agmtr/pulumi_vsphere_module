@@ -16,15 +16,12 @@ from pulumi_vsphere_module import Instance, InstanceArgs, NetworkArgs
 # Define the parameters for the instance creation
 network_args = NetworkArgs(name="vm-lan-1", ip_address="dhcp")
 instance_args = InstanceArgs(
-    datacenter="Datacenter",
-    cluster="dell-cluster-1",
-    datastore="nfs_default_1",
-    template="rocky-9-template",
     cpus=1,
     memory=1024,
-    ssh_key="~/.ssh/id_ed25519.pub",
     networks=[network_args],
-    userdata_file="userdata.yaml"
+    template="rocky-9-template",
+    userdata_file="userdata.yaml",  
+    ssh_key="~/.ssh/id_ed25519.pub",
 )
 
 # Create the instance
