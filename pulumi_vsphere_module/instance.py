@@ -95,7 +95,7 @@ class InstanceArgs:
         return None
 
     def generate_metadata(self, name, ssh_keys, networks):
-        template = Template(METADATA_TEMPLATE)
+        template = Template(METADATA_TEMPLATE, trim_blocks=True, lstrip_blocks=True)
         return template.render(name=name, ssh_keys=ssh_keys, networks=networks)
 
 
