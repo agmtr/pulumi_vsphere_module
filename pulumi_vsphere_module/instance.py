@@ -73,7 +73,8 @@ class InstanceArgs:
             disks: list = None,
             ssh_keys=None,
             networks: list = None,
-            userdata_file: str = "userdata.yaml"
+            userdata_file: str = "userdata.yaml",
+            enable_disk_uuid: bool = True,
     ):
         if ssh_keys is None:
             ssh_keys = ["~/.ssh/id_ed25519.pub"]
@@ -98,6 +99,7 @@ class InstanceArgs:
         self.memory = memory
         self.disks = disks if disks else self.default_disks()
         self.userdata = self.read_userdata(userdata_file) if userdata_file else None
+        self.enable_disk_uuid = enable_disk_uuid
 
     def default_disks(self):
         return {disk.label: disk.size for disk in self.template.disks}
@@ -163,7 +165,8 @@ class Instance(ComponentResource):
                 ),
                 guest_id=args.template.guest_id,
                 firmware=args.template.firmware,
-                extra_config=extra_config
+                extra_config=extra_config,
+                enable_disk_uuid=args.enable_disk_uuid
             ),
             opts=ResourceOptions(ignore_changes=["hvMode", "eptRviMode"])
         )
