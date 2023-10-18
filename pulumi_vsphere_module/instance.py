@@ -122,6 +122,7 @@ class Instance(ComponentResource):
         self.instance = vsphere.VirtualMachine(
             resource_name=name,
             args=vsphere.VirtualMachineArgs(
+                name=name,
                 resource_pool_id=args.cluster.resource_pool_id,
                 datastore_id=args.datastore.id,
                 num_cpus=args.cpus,
