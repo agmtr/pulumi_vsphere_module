@@ -96,7 +96,7 @@ class InstanceArgs:
 
     def generate_metadata(self, name, ssh_keys, networks):
         template = Template(METADATA_TEMPLATE)
-        return template.render(name=name, ssh_key=ssh_keys, networks=networks)
+        return template.render(name=name, ssh_keys=ssh_keys, networks=networks)
 
 
 class Instance(ComponentResource):
