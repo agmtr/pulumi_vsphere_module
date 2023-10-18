@@ -103,7 +103,7 @@ class Instance(ComponentResource):
     def __init__(self, name, args: InstanceArgs, opts: ResourceOptions = None):
         super().__init__("vsphere:modules:Instance", name, None, opts)
 
-        self.metadata = args.generate_metadata(name, args.ssh_key, args.networks)
+        self.metadata = args.generate_metadata(name, args.ssh_keys, args.networks)
 
         network_ids = [vsphere.get_network(name=network.name, datacenter_id=args.datacenter.id).id
                        for network in args.networks]
