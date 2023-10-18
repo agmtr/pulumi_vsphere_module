@@ -10,6 +10,11 @@ pip install git+https://github.com/agmtr/pulumi_vsphere_module.git
 
 ### Usage
 
+```bash
+pulumi login --local
+pulumi new python
+```
+
 ```python
 from pulumi_vsphere_module import Instance, InstanceArgs, NetworkArgs
 
@@ -26,6 +31,10 @@ instance_args = InstanceArgs(
 
 # Create the instance
 instance = Instance("my-instance", instance_args)
+```
+
+```bash
+pulumi up
 ```
 
 ### License
