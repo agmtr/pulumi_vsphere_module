@@ -8,7 +8,10 @@ METADATA_TEMPLATE = """
 instance-id: "iid-{{ name }}"
 local-hostname: {{ name }}
 public-keys:
-  - {{ ssh_key }}
+  {% for key in ssh_keys %}
+  - {{ key }}
+  {% endfor %}
+
 
 network:
   version: 2
@@ -54,15 +57,23 @@ class InstanceArgs:
             cpus: int = 1,
             memory: int = 1024,
             disks: dict = None,
-            ssh_key: str = "~/.ssh/id_ed25519.pub",
+            ssh_keys=None,
             networks: list = None,
             userdata_file: str = "userdata.yaml"
     ):
+        if ssh_keys is None:
+            ssh_keys = ["~/.ssh/id_ed25519.pub"]
         if networks is None:
             networks = [
                 NetworkArgs(name="vm-lan-1", ip_address="dhcp"),
             ]
-        self.ssh_key = open(os.path.expanduser(ssh_key)).read().strip()
+        self.ssh_keys = []
+        for key_path_or_key in ssh_keys:
+            if os.path.exists(os.path.expanduser(key_path_or_key)):
+                with open(os.path.expanduser(key_path_or_key), 'r') as f:
+                    self.ssh_keys.append(f.read().strip())
+            else:
+                self.ssh_keys.append(key_path_or_key.strip())
         self.datacenter = vsphere.get_datacenter(name=datacenter)
         self.cluster = vsphere.get_compute_cluster(name=cluster, datacenter_id=self.datacenter.id)
         self.datastore = vsphere.get_datastore(name=datastore, datacenter_id=self.datacenter.id)
