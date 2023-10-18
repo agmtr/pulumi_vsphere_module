@@ -1,0 +1,19 @@
+#cloud-config
+
+yum_repos:
+  docker:
+    baseurl: https://download.docker.com/linux/centos/9/$basearch/stable
+    gpgcheck: yes
+    gpgkey: https://download.docker.com/linux/centos/gpg
+    name: Docker CE Stable - $basearch
+    enabled: yes
+
+packages:
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+
+runcmd:
+  - systemctl daemon-reload
+  - systemctl enable docker
+  - systemctl start --no-block docker
