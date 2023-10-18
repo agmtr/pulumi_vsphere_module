@@ -8,6 +8,12 @@ A module for creating virtual machines on VMware vSphere using Pulumi.
 pip install git+https://github.com/agmtr/pulumi_vsphere_module.git
 ```
 
+### Prerequisites
+
+Pulumi CLI installed.
+Necessary environment variables set (VSPHERE_USER, VSPHERE_PASSWORD, VSPHERE_SERVER, VSPHERE_ALLOW_UNVERIFIED_SSL=true).
+A vSphere environment with required resources (datastores, networks, templates, etc.).
+
 ### Usage
 
 ```bash
