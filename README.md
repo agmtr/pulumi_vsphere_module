@@ -16,7 +16,7 @@ pulumi new python
 ```
 
 ```python
-from pulumi_vsphere_module import Instance, InstanceArgs, NetworkArgs
+from pulumi_vsphere_module.instance import Instance, InstanceArgs, NetworkArgs
 
 # Define the parameters for the instance creation
 network_args = NetworkArgs(name="vm-lan-1", ip_address="dhcp")
