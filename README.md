@@ -22,6 +22,7 @@ pulumi new python
 ```
 
 ```python
+# __main__.py
 from pulumi_vsphere_module.instance import Instance, InstanceArgs, NetworkArgs
 
 # Define the parameters for the instance creation
