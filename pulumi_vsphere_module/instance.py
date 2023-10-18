@@ -31,6 +31,20 @@ network:
 """
 
 
+class DiskArgs:
+    def __init__(
+            self,
+            label: str = "root",
+            size: int = 20,
+            eagerly_scrub: bool = False,
+            thin_provisioned: bool = True,
+    ):
+        self.label = label
+        self.size = size
+        self.eagerly_scrub = eagerly_scrub
+        self.thin_provisioned = thin_provisioned
+
+
 class NetworkArgs:
     def __init__(
             self,
@@ -67,6 +81,9 @@ class InstanceArgs:
             networks = [
                 NetworkArgs(name="vm-lan-1", ip_address="dhcp"),
             ]
+        if disks is None:
+            disks = [DiskArgs()]
+        self.disks = disks
         self.ssh_keys = []
         for key_path_or_key in ssh_keys:
             if os.path.exists(os.path.expanduser(key_path_or_key)):
@@ -129,13 +146,13 @@ class Instance(ComponentResource):
                 memory=args.memory,
                 disks=[
                     vsphere.VirtualMachineDiskArgs(
-                        label=label,
-                        size=size,
+                        label=disk.label,
+                        size=disk.size,
                         unit_number=int(idx),
-                        eagerly_scrub=args.template.disks[0].eagerly_scrub,
-                        thin_provisioned=args.template.disks[0].thin_provisioned
+                        eagerly_scrub=disk.eagerly_scrub,
+                        thin_provisioned=disk.thin_provisioned
                     )
-                    for idx, (label, size) in enumerate(args.disks.items())
+                    for idx, disk in enumerate(args.disks)
                 ],
                 network_interfaces=[
                     vsphere.VirtualMachineNetworkInterfaceArgs(
