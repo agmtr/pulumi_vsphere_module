@@ -78,9 +78,8 @@ class InstanceArgs:
         if ssh_keys is None:
             ssh_keys = ["~/.ssh/id_ed25519.pub"]
         if networks is None:
-            networks = [
-                NetworkArgs(name="vm-lan-1", ip_address="dhcp"),
-            ]
+            networks = [NetworkArgs()]
+        self.networks = networks
         if disks is None:
             disks = [DiskArgs()]
         self.disks = disks
@@ -99,8 +98,6 @@ class InstanceArgs:
         self.memory = memory
         self.disks = disks if disks else self.default_disks()
         self.userdata = self.read_userdata(userdata_file) if userdata_file else None
-
-        self.networks = networks
 
     def default_disks(self):
         return {disk.label: disk.size for disk in self.template.disks}
