@@ -94,9 +94,9 @@ class InstanceArgs:
                 return file.read()
         return None
 
-    def generate_metadata(self, name, ssh_key, networks):
+    def generate_metadata(self, name, ssh_keys, networks):
         template = Template(METADATA_TEMPLATE)
-        return template.render(name=name, ssh_key=ssh_key, networks=networks)
+        return template.render(name=name, ssh_key=ssh_keys, networks=networks)
 
 
 class Instance(ComponentResource):
