@@ -70,7 +70,7 @@ class InstanceArgs:
             template: str = "rocky-9-template",
             cpus: int = 1,
             memory: int = 1024,
-            disks: dict = None,
+            disks: list = None,
             ssh_keys=None,
             networks: list = None,
             userdata_file: str = "userdata.yaml"
