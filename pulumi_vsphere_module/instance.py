@@ -68,7 +68,9 @@ def generate_userdata(disks, userdata_file=None):
         with open(userdata_file, 'r') as f:
             custom_yaml = yaml.safe_load(f)
             userdata_generated.update(custom_yaml)
-    return yaml.dump(userdata_generated)
+
+    userdata_final = "#cloud-config\n" + yaml.dump(userdata_generated)
+    return userdata_final
 
 
 class Instance(ComponentResource):
