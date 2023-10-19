@@ -90,7 +90,8 @@ class Instance(ComponentResource):
                          args.networks]
 
     def _generate_extra_config(self, name, args):
-        metadata = generate_metadata(name, args.ssh_keys, args.networks)
+        ssh_keys = load_ssh_keys(args.ssh_keys)
+        metadata = generate_metadata(name, ssh_keys, args.networks)
         userdata = generate_userdata(args.disks, args.userdata_file)
 
         self.extra_config = {
