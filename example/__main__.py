@@ -13,6 +13,12 @@ instance_args = InstanceArgs(
         DiskArgs(
             label='logs',
             size=50,
+            mount_point="/var/log"
+        ),
+        DiskArgs(
+            label="data",
+            size=500,
+            mount_point="/var/data"
         )
     ],
     networks=[
@@ -22,7 +28,9 @@ instance_args = InstanceArgs(
     ],
     ssh_keys=[
         './id_ed25519.pub',
-    ]
+    ],
+    template="rocky-8-template",
+    userdata_file="./userdata.yaml"
 )
 
 instance_1 = Instance("vm-1", instance_args)
