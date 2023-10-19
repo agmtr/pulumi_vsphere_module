@@ -9,7 +9,7 @@ from jinja2 import Environment, FileSystemLoader
 from dataclasses import dataclass, field
 from typing import List
 
-template_loader = FileSystemLoader(searchpath="./")
+template_loader = FileSystemLoader(searchpath=os.path.dirname(os.path.abspath(__file__)))
 template_env = Environment(loader=template_loader, trim_blocks=True, lstrip_blocks=True)
 
 METADATA_TEMPLATE = template_env.get_template("metadata.yaml.j2")
