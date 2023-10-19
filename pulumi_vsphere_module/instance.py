@@ -49,15 +49,12 @@ class InstanceArgs:
     userdata_file: str = None
 
 
-def load_ssh_keys(paths_or_keys):
+def load_ssh_keys(file_paths):
     ssh_keys = []
-    for path_or_key in paths_or_keys:
-        expanded_path = os.path.expanduser(path_or_key)
-        if os.path.exists(expanded_path):
-            with open(expanded_path, 'r') as f:
-                ssh_keys.append(f.read().strip())
-        else:
-            ssh_keys.append(path_or_key.strip())
+    for file_path in file_paths:
+        expanded_path = os.path.expanduser(file_path)
+        with open(expanded_path, 'r') as f:
+            ssh_keys.append(f.read().strip())
     return ssh_keys
 
 
