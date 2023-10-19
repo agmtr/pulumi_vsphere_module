@@ -14,7 +14,7 @@ A module for creating virtual machines on VMware vSphere using Pulumi.
 pulumi login --local (or pulumi login)
 pulumi new python
 source venv/bin/activate
-pip install git+https://github.com/agmtr/pulumi_vsphere_module.git
+pip install git+https://github.com/agmtr/pulumi_vsphere_module.git@<VERSION>
 ```
 
 ```python
