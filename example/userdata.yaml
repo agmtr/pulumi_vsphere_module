@@ -1,19 +1,20 @@
 #cloud-config
 
+device_aliases:
+  ephemeral0: '/dev/disk/by-path/pci-0000:03:00.0-scsi-0:0:1:0'
+
 disk_setup:
-  /dev/sdb:
+  ephemeral0:
     table_type: gpt
     layout: true
-    overwrite: false
 
 fs_setup:
   - label: logs
     filesystem: ext4
-    device: /dev/sdb
-    partition: auto
+    device: ephemeral0.1
 
 mounts:
-    - [ /dev/disk/by-label/logs, /var/log, ext4, "defaults,nofail", "0", "0" ]
+    - [ ephemeral0.1, /var/log, ext4, "defaults,nofail", "0", "0" ]
 
 yum_repos:
   docker:
