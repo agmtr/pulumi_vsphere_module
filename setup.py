@@ -9,6 +9,7 @@ setup(
         'pulumi_vsphere',
         'jinja2',
     ],
+    include_package_data=True,
     author='Your Name',
     author_email='your_email@example.com',
     description='Pulumi vSphere module for creating virtual machines',

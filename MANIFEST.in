@@ -1,0 +1,1 @@
+recursive-include pulumi_vsphere_module *.j2

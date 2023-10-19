@@ -1,0 +1,35 @@
+#cloud-config
+
+{% if disks|length > 1 %}
+device_aliases:
+{% for disk in disks %}
+  {% if loop.index0 >= 1 %}
+  ephemeral{{ loop.index0 }}: '/dev/disk/by-path/pci-0000:03:00.0-scsi-0:0:{{ loop.index0 }}:0'
+  {% endif %}
+{% endfor %}
+
+disk_setup:
+{% for disk in disks %}
+  {% if loop.index0 >= 1 %}
+  ephemeral{{ loop.index0 }}:
+    table_type: gpt
+    layout: true
+  {% endif %}
+{% endfor %}
+
+fs_setup:
+{% for disk in disks %}
+  {% if loop.index0 >= 1 %}
+  - label: {{ disk.label }}
+    filesystem: ext4
+    device: ephemeral{{ loop.index0 }}.1
+  {% endif %}
+{% endfor %}
+
+mounts:
+{% for disk in disks %}
+  {% if loop.index0 >= 1 %}
+    - [ /dev/disk/by-label/{{ disk.label }}, {{ disk.mount_point }} ]
+  {% endif %}
+{% endfor %}
+{% endif %}

@@ -1,146 +1,114 @@
+# instance.py
+
 import os
+import yaml
 import pulumi_vsphere as vsphere
 from pulumi import ComponentResource, ResourceOptions, export
-from jinja2 import Template
 from base64 import b64encode
+from jinja2 import Environment, FileSystemLoader
+from dataclasses import dataclass, field
+from typing import List
 
-METADATA_TEMPLATE = """
-instance-id: "iid-{{ name }}"
-local-hostname: {{ name }}
-public-keys:
-  {% for key in ssh_keys %}
-  - {{ key }}
-  {% endfor %}
+template_loader = FileSystemLoader(searchpath="./")
+template_env = Environment(loader=template_loader, trim_blocks=True, lstrip_blocks=True)
 
-
-network:
-  version: 2
-  ethernets:
-    {% for network in networks %}
-    {{ network.interface }}:
-      {% if network.ip_address %}
-      addresses:
-        - {{ network.ip_address }}
-      gateway4: {{ network.gateway if network.gateway else '.'.join(network.ip_address.split('/')[0].split('.')[:-1]) + '.1' }}
-      nameservers:
-        addresses: {{ network.dns_servers if network.dns_servers else ['8.8.8.8', '1.1.1.1'] }}
-      {% else %}
-      dhcp4: true
-      {% endif %}
-    {% endfor %}
-"""
+METADATA_TEMPLATE = template_env.get_template("metadata.yaml.j2")
+USERDATA_TEMPLATE = template_env.get_template("userdata.yaml.j2")
 
 
+@dataclass
 class DiskArgs:
-    def __init__(
-            self,
-            label: str = "root",
-            size: int = 20,
-            eagerly_scrub: bool = False,
-            thin_provisioned: bool = True,
-    ):
-        self.label = label
-        self.size = size
-        self.eagerly_scrub = eagerly_scrub
-        self.thin_provisioned = thin_provisioned
+    label: str = "root"
+    size: int = 20
+    eagerly_scrub: bool = False
+    thin_provisioned: bool = True
+    mount_point: str = None
 
 
+@dataclass
 class NetworkArgs:
-    def __init__(
-            self,
-            name: str = "vm-lan-1",
-            interface: str = "ens192",
-            ip_address: str = "dhcp",
-            gateway: str = None,
-            dns_servers: list = None,
-    ):
-        self.name = name
-        self.interface = interface
-        self.ip_address = ip_address
-        self.gateway = gateway
-        self.dns_servers = dns_servers
+    name: str = "vm-lan-1"
+    interface: str = "ens192"
+    ip_address: str = "dhcp"
+    gateway: str = None
+    dns_servers: List[str] = field(default_factory=lambda: [])
 
 
+@dataclass
 class InstanceArgs:
-    def __init__(
-            self,
-            datacenter: str = "Datacenter",
-            cluster: str = "dell-cluster-1",
-            datastore: str = "nfs_default_1",
-            template: str = "rocky-9-template",
-            cpus: int = 1,
-            memory: int = 1024,
-            disks: list = None,
-            ssh_keys=None,
-            networks: list = None,
-            userdata_file: str = "userdata.yaml",
-            enable_disk_uuid: bool = True,
-    ):
-        if ssh_keys is None:
-            ssh_keys = ["~/.ssh/id_ed25519.pub"]
-        if networks is None:
-            networks = [NetworkArgs()]
-        self.networks = networks
-        if disks is None:
-            disks = [DiskArgs()]
-        self.disks = disks
-        self.ssh_keys = []
-        for key_path_or_key in ssh_keys:
-            if os.path.exists(os.path.expanduser(key_path_or_key)):
-                with open(os.path.expanduser(key_path_or_key), 'r') as f:
-                    self.ssh_keys.append(f.read().strip())
-            else:
-                self.ssh_keys.append(key_path_or_key.strip())
-        self.datacenter = vsphere.get_datacenter(name=datacenter)
-        self.cluster = vsphere.get_compute_cluster(name=cluster, datacenter_id=self.datacenter.id)
-        self.datastore = vsphere.get_datastore(name=datastore, datacenter_id=self.datacenter.id)
-        self.template = vsphere.get_virtual_machine(name=template, datacenter_id=self.datacenter.id)
-        self.cpus = cpus
-        self.memory = memory
-        self.disks = disks if disks else self.default_disks()
-        self.userdata = self.read_userdata(userdata_file) if userdata_file else None
-        self.enable_disk_uuid = enable_disk_uuid
+    datacenter: str = "Datacenter"
+    cluster: str = "dell-cluster-1"
+    datastore: str = "nfs_default_1"
+    template: str = "rocky-9-template"
+    cpus: int = 1
+    memory: int = 1024
+    disks: List[DiskArgs] = field(default_factory=lambda: [DiskArgs()])
+    ssh_keys: List[str] = field(default_factory=lambda: ["~/.ssh/id_ed25519.pub"])
+    networks: List[NetworkArgs] = field(default_factory=lambda: [NetworkArgs()])
+    enable_disk_uuid: bool = True
+    userdata_file: str = None
 
-    def default_disks(self):
-        return {disk.label: disk.size for disk in self.template.disks}
 
-    def read_userdata(self, userdata_file):
-        if userdata_file and os.path.exists(userdata_file):
-            with open(userdata_file, 'r') as file:
-                return file.read()
-        return None
+def load_ssh_keys(paths_or_keys):
+    ssh_keys = []
+    for path_or_key in paths_or_keys:
+        expanded_path = os.path.expanduser(path_or_key)
+        if os.path.exists(expanded_path):
+            with open(expanded_path, 'r') as f:
+                ssh_keys.append(f.read().strip())
+        else:
+            ssh_keys.append(path_or_key.strip())
+    return ssh_keys
 
-    def generate_metadata(self, name, ssh_keys, networks):
-        template = Template(METADATA_TEMPLATE, trim_blocks=True, lstrip_blocks=True)
-        return template.render(name=name, ssh_keys=ssh_keys, networks=networks)
+
+def generate_metadata(name, ssh_keys, networks):
+    return METADATA_TEMPLATE.render(name=name, ssh_keys=ssh_keys, networks=networks)
+
+
+def generate_userdata(disks, userdata_file=None):
+    userdata_generated = yaml.safe_load(USERDATA_TEMPLATE.render(disks=disks))
+    if userdata_file:
+        with open(userdata_file, 'r') as f:
+            custom_yaml = yaml.safe_load(f)
+            userdata_generated.update(custom_yaml)
+    return yaml.dump(userdata_generated)
 
 
 class Instance(ComponentResource):
     def __init__(self, name, args: InstanceArgs, opts: ResourceOptions = None):
         super().__init__("vsphere:modules:Instance", name, None, opts)
 
-        self.metadata = args.generate_metadata(name, args.ssh_keys, args.networks)
+        self._prepare_resources(args)
+        self._generate_extra_config(name, args)
 
-        network_ids = [vsphere.get_network(name=network.name, datacenter_id=args.datacenter.id).id
-                       for network in args.networks]
+        export("instance_ip", self.instance.default_ip_address)
+        self.register_outputs({})
 
-        extra_config = {
-            "guestinfo.metadata": b64encode(self.metadata.encode()).decode(),
+    def _prepare_resources(self, args):
+        self.datacenter = vsphere.get_datacenter(name=args.datacenter)
+        self.cluster = vsphere.get_compute_cluster(name=args.cluster, datacenter_id=self.datacenter.id)
+        self.datastore = vsphere.get_datastore(name=args.datastore, datacenter_id=self.datacenter.id)
+        self.template = vsphere.get_virtual_machine(name=args.template, datacenter_id=self.datacenter.id)
+        self.networks = [vsphere.get_network(name=network.name, datacenter_id=self.datacenter.id) for network in
+                         args.networks]
+
+    def _generate_extra_config(self, name, args):
+        metadata = generate_metadata(name, args.ssh_keys, args.networks)
+        userdata = generate_userdata(args.disks, args.userdata_file)
+
+        self.extra_config = {
+            "guestinfo.metadata": b64encode(metadata.encode()).decode(),
             "guestinfo.metadata.encoding": "base64",
+            "guestinfo.userdata": b64encode(userdata.encode()).decode(),
+            "guestinfo.userdata.encoding": "base64",
         }
-
-        if args.userdata:
-            extra_config.update({
-                "guestinfo.userdata": b64encode(args.userdata.encode()).decode(),
-                "guestinfo.userdata.encoding": "base64",
-            })
 
         self.instance = vsphere.VirtualMachine(
             resource_name=name,
             args=vsphere.VirtualMachineArgs(
                 name=name,
-                resource_pool_id=args.cluster.resource_pool_id,
-                datastore_id=args.datastore.id,
+                resource_pool_id=self.cluster.resource_pool_id,
+                datastore_id=self.datastore.id,
                 num_cpus=args.cpus,
                 memory=args.memory,
                 disks=[
@@ -155,20 +123,17 @@ class Instance(ComponentResource):
                 ],
                 network_interfaces=[
                     vsphere.VirtualMachineNetworkInterfaceArgs(
-                        network_id=network_id,
-                        adapter_type=args.template.network_interfaces[0].adapter_type,
+                        network_id=network.id,
                     )
-                    for network_id in network_ids
+                    for network in self.networks
                 ],
                 clone=vsphere.VirtualMachineCloneArgs(
-                    template_uuid=args.template.id,
+                    template_uuid=self.template.id,
                 ),
-                guest_id=args.template.guest_id,
-                firmware=args.template.firmware,
-                extra_config=extra_config,
+                guest_id=self.template.guest_id,
+                firmware=self.template.firmware,
+                extra_config=self.extra_config,
                 enable_disk_uuid=args.enable_disk_uuid
             ),
             opts=ResourceOptions(ignore_changes=["hvMode", "eptRviMode"])
         )
-        export("instance_ip", self.instance.default_ip_address)
-        self.register_outputs({})

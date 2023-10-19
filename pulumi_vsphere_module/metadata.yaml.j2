@@ -1,0 +1,24 @@
+#cloud-config
+
+instance-id: "iid-{{ name }}"
+local-hostname: {{ name }}
+public-keys:
+  {% for key in ssh_keys %}
+  - {{ key }}
+  {% endfor %}
+
+network:
+  version: 2
+  ethernets:
+    {% for network in networks %}
+    {{ network.interface }}:
+      {% if network.ip_address %}
+      addresses:
+        - {{ network.ip_address }}
+      gateway4: {{ network.gateway if network.gateway else '.'.join(network.ip_address.split('/')[0].split('.')[:-1]) + '.1' }}
+      nameservers:
+        addresses: {{ network.dns_servers if network.dns_servers else ['8.8.8.8', '1.1.1.1'] }}
+      {% else %}
+      dhcp4: true
+      {% endif %}
+    {% endfor %}
