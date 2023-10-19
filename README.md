@@ -59,6 +59,36 @@ instance_1 = Instance("vm-1", instance_args)
 pulumi up
 ```
 
+## Specifications
+### Data Classes
+
+DiskArgs: Configuration for VM disks. Attributes include:
+- label: Disk label (default: "root")
+- size: Disk size in GB (default: 20)
+- eagerly_scrub: Boolean flag for disk scrubbing (default: False)
+- thin_provisioned: Boolean flag for disk provisioning (default: True)
+- mount_point: Disk mount point, if applicable
+
+NetworkArgs: Configuration for VM network settings. Attributes include:
+- name: Network name (default: "vm-lan-1")
+- interface: Network interface (default: "ens192")
+- ip_address: IP address or "dhcp" for dynamic assignment (default: "dhcp")
+- gateway: Network gateway, if applicable
+- dns_servers: List of DNS servers
+
+InstanceArgs: Configuration for the VM instance itself. Attributes include:
+- datacenter: Datacenter name
+- cluster: Cluster name
+- datastore: Datastore name
+- template: VM template to use
+- cpus: Number of CPUs
+- memory: RAM in MB
+- disks: List of DiskArgs
+- ssh_keys: List of paths to SSH key files
+- networks: List of NetworkArgs
+- enable_disk_uuid: Boolean flag to enable disk UUID
+- userdata_file: Path to an additional user data YAML file
+
 ## License
 
 MIT
