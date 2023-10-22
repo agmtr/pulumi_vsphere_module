@@ -47,6 +47,8 @@ class InstanceArgs:
     networks: List[NetworkArgs] = field(default_factory=lambda: [NetworkArgs()])
     enable_disk_uuid: bool = True
     userdata_file: str = None
+    custom_extra_config: dict = field(default_factory=lambda: {}),
+    wait_for_guest_net_timeout: int = 300
 
 
 def load_ssh_keys(file_paths):
@@ -79,6 +81,7 @@ class Instance(ComponentResource):
 
         self._prepare_resources(args)
         self._generate_extra_config(name, args)
+        self._create_instance(name, args)
 
         export("instance_ip", self.instance.default_ip_address)
         self.register_outputs({})
@@ -96,13 +99,17 @@ class Instance(ComponentResource):
         metadata = generate_metadata(name, ssh_keys, args.networks)
         userdata = generate_userdata(args.disks, args.userdata_file)
 
-        self.extra_config = {
-            "guestinfo.metadata": b64encode(metadata.encode()).decode(),
-            "guestinfo.metadata.encoding": "base64",
-            "guestinfo.userdata": b64encode(userdata.encode()).decode(),
-            "guestinfo.userdata.encoding": "base64",
-        }
+        if not args.custom_extra_config:
+            self.extra_config = {
+                "guestinfo.metadata": b64encode(metadata.encode()).decode(),
+                "guestinfo.metadata.encoding": "base64",
+                "guestinfo.userdata": b64encode(userdata.encode()).decode(),
+                "guestinfo.userdata.encoding": "base64",
+            }
+        else:
+            self.extra_config = args.custom_extra_config
 
+    def _create_instance(self, name, args):
         self.instance = vsphere.VirtualMachine(
             resource_name=name,
             args=vsphere.VirtualMachineArgs(
@@ -133,7 +140,8 @@ class Instance(ComponentResource):
                 guest_id=self.template.guest_id,
                 firmware=self.template.firmware,
                 extra_config=self.extra_config,
-                enable_disk_uuid=args.enable_disk_uuid
+                enable_disk_uuid=args.enable_disk_uuid,
+                wait_for_guest_net_timeout=args.wait_for_guest_net_timeout
             ),
             opts=ResourceOptions(ignore_changes=["hvMode", "eptRviMode"])
         )
