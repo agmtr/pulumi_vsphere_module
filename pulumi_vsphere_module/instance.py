@@ -47,7 +47,7 @@ class InstanceArgs:
     networks: List[NetworkArgs] = field(default_factory=lambda: [NetworkArgs()])
     enable_disk_uuid: bool = True
     userdata_file: str = None
-    custom_extra_config: dict = field(default_factory=lambda: {}),
+    custom_extra_config: dict = None
     wait_for_guest_net_timeout: int = 300
 
 
