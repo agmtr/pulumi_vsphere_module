@@ -65,14 +65,18 @@ def generate_metadata(name, ssh_keys, networks):
 
 
 def generate_userdata(disks, userdata_file=None):
-    userdata_generated = yaml.safe_load(USERDATA_TEMPLATE.render(disks=disks))
+    userdata_generated = yaml.safe_load(USERDATA_TEMPLATE.render(disks=disks)) or {}
+    custom_yaml = None
+
     if userdata_file:
         with open(userdata_file, 'r') as f:
             custom_yaml = yaml.safe_load(f)
-            userdata_generated.update(custom_yaml)
+    if not userdata_generated and custom_yaml is not None:
+        return "#cloud-config\n" + yaml.dump(custom_yaml, default_flow_style=False)
+    if custom_yaml is not None:
+        userdata_generated.update(custom_yaml)
 
-    userdata_final = "#cloud-config\n" + yaml.dump(userdata_generated)
-    return userdata_final
+    return "#cloud-config\n" + yaml.dump(userdata_generated, default_flow_style=False) if userdata_generated else ""
 
 
 class Instance(ComponentResource):
