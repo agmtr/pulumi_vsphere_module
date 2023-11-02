@@ -22,12 +22,12 @@ pip install git+https://github.com/agmtr/pulumi_vsphere_module.git@<VERSION>
 from pulumi_vsphere_module.instance import Instance, InstanceArgs, DiskArgs, NetworkArgs
 
 instance_args = InstanceArgs(
-    cpus=4,
-    memory=4 * 1024,
+    cpus=4, # default: 1
+    memory=4 * 1024, # default: 1024
     disks=[
         DiskArgs(
             label='root',
-            size=20,
+            size=20, # default: 20
         ),
         DiskArgs(
             label='logs',
@@ -42,14 +42,14 @@ instance_args = InstanceArgs(
     ],
     networks=[
         NetworkArgs(
-            ip_address='10.0.1.11'
+            ip_address='10.0.1.11/24' # default: "dhcp"
         )
     ],
     ssh_keys=[
-        './id_ed25519.pub',
+        './id_ed25519.pub', # default: "~/.ssh/id_ed25519.pub"
     ],
-    template="rocky-8-template",
-    userdata_file="./userdata.yaml"
+    template="rocky-8-template", # default: "rocky-9-template"
+    userdata_file="./userdata.yaml" # default: None
 )
 
 instance_1 = Instance("vm-1", instance_args)

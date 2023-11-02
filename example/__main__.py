@@ -23,7 +23,7 @@ instance_args = InstanceArgs(
     ],
     networks=[
         NetworkArgs(
-            ip_address='10.0.1.11'
+            ip_address='10.0.1.11/24'  # or "dhcp"
         )
     ],
     ssh_keys=[
